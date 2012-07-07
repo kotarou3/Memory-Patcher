@@ -1,0 +1,84 @@
+/*
+    This file is part of Memory Patcher.
+
+    Memory Patcher is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Memory Patcher is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with Memory Patcher. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#pragma once
+#ifndef MUTEX_H
+#define MUTEX_H
+
+#if defined(_GLIBCXX_HAS_GTHREADS) || !defined(_WIN32)
+    #include_next <mutex>
+#else
+
+// Class to provide a recursive mutexs where C++11's thread support isn't available yet on Windows
+namespace win32
+{
+    #include <windows.h>
+}
+
+namespace std
+{
+
+class recursive_mutex
+{
+    public:
+        inline recursive_mutex()
+        {
+            win32::InitializeCriticalSection(&criticalSection_);
+        }
+        inline ~recursive_mutex()
+        {
+            win32::DeleteCriticalSection(&criticalSection_);
+        }
+
+        inline void lock()
+        {
+            win32::EnterCriticalSection(&criticalSection_);
+        }
+        inline bool try_lock()
+        {
+            return win32::TryEnterCriticalSection(&criticalSection_);
+        }
+        inline void unlock()
+        {
+            win32::LeaveCriticalSection(&criticalSection_);
+        }
+
+    private:
+        win32::CRITICAL_SECTION criticalSection_;
+};
+
+template <class M>
+class lock_guard
+{
+    public:
+        inline lock_guard(M& m):m(m)
+        {
+            m.lock();
+        }
+        inline ~lock_guard()
+        {
+            m.unlock();
+        }
+
+    private:
+        M& m;
+};
+
+}
+
+#endif
+#endif
