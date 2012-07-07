@@ -5,3 +5,5 @@
 *.o
 *.a
 *.Po
+
+src/jsoncpp/include/*

@@ -30,5 +30,5 @@ else
     COMMON_LIB_LDFLAGS += -ldl
 endif
 
-TINYXPATH_LIB = libtinyxpath.a
-TINYXPATH_DIR = tinyxpath
+JSONCPP_LIB = libjsoncpp.a
+JSONCPP_DIR = jsoncpp
