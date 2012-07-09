@@ -39,7 +39,7 @@ SettingsManager::SettingsManager()
     branch = settingsTree_.insert(std::make_pair("defaultSettings", SettingsBranch())).first;
     branch->second.parent = branch;
 
-    // PatchCompiler default settings set here because it has not constructor
+    // PatchCompiler default settings set here because it has no constructor
     setDefault("manager.PatchCompiler.patchesLibrary", "libpatches."
     #ifdef _WIN32
         "dll");
@@ -127,7 +127,13 @@ void SettingsManager::load(const std::string& filename, bool isSaveOnExit)
     // Read the JSON from the file
     std::FILE* in = std::fopen(filename.c_str(), "r");
     if (in == nullptr)
-        throw std::runtime_error("Could not open " + filename + " to read settings from: " + strError(errno));
+    {
+        if (errno != ENOENT)
+            throw std::runtime_error("Could not open " + filename + " to read settings from: " + strError(errno));
+        if (isSaveOnExit)
+            saveOnExitFilename_ = filename;
+        return;
+    }
     std::string buffer;
     buffer.resize(1024);
     std::string::pointer nextChunk = &buffer[0];
