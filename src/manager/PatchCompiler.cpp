@@ -48,7 +48,7 @@ namespace posix
     #include <dirent.h>
     using ::fdopen;
     using ::pid_t; // We shouldn't need to do this, but <string> causes everything in <pthreads.h> to be included in the global namespace
-    int mkdir(const char* path) { return mkdir(path, 755); }
+    int mkdir(const char* path) { return mkdir(path, 0755); }
 }
     #include "stringToArgcArgv.h"
 #endif
@@ -88,7 +88,7 @@ std::string compileHook(const Hook& hook, bool& isSkipped, bool force)
     std::string source = generateHookSource(hook);
     uint32_t crc32 = calculateCrc32Checksum(std::vector<uint8_t>(source.begin(), source.end()));
     std::string objectFilename = getObjectDirectory() + getHookSafename(hook.name) + ".o";
-    if (!force && crc32 == std::stoul("0" + SettingsManager::getSingleton().get("hooks." + hook.name + ".crc32")))
+    if (!force && crc32 == std::stoul("0" + SettingsManager::getSingleton().get("manager.hooks." + hook.name + ".crc32")))
     {
         // Check if the compiled object exists before we skip
         std::FILE* objectFile = std::fopen(objectFilename.c_str(), "rb");
@@ -112,7 +112,7 @@ std::string compileHook(const Hook& hook, bool& isSkipped, bool force)
     // Touch a file so `linkObjects()' knows to relink
     std::fclose(std::fopen((getObjectDirectory() + "modified").c_str(), "wb"));
 
-    SettingsManager::getSingleton().set("hooks." + hook.name + ".crc32", itos(crc32));
+    SettingsManager::getSingleton().set("manager.hooks." + hook.name + ".crc32", itos(crc32));
     return output;
 }
 
@@ -122,7 +122,7 @@ std::string compilePatchPack(const PatchPack& patchPack, bool& isSkipped, bool f
     std::string source = generatePatchPackSource(patchPack);
     uint32_t crc32 = calculateCrc32Checksum(std::vector<uint8_t>(source.begin(), source.end()));
     std::string objectFilename = getObjectDirectory() + getPatchPackSafename(patchPack.info.name) + ".o";
-    if (!force && crc32 == std::stoul("0" + SettingsManager::getSingleton().get("patchPacks." + patchPack.info.name + ".crc32")))
+    if (!force && crc32 == std::stoul("0" + SettingsManager::getSingleton().get("manager.patchPacks." + patchPack.info.name + ".crc32")))
     {
         // Check if the compiled object exists before we skip
         std::FILE* objectFile = std::fopen(objectFilename.c_str(), "rb");
@@ -146,13 +146,13 @@ std::string compilePatchPack(const PatchPack& patchPack, bool& isSkipped, bool f
     // Touch a file so `linkObjects()' knows to relink
     std::fclose(std::fopen((getObjectDirectory() + "modified").c_str(), "wb"));
 
-    SettingsManager::getSingleton().set("patchPacks." + patchPack.info.name + ".crc32", itos(crc32));
+    SettingsManager::getSingleton().set("manager.patchPacks." + patchPack.info.name + ".crc32", itos(crc32));
     return output;
 }
 
 std::string linkObjects(bool force)
 {
-    std::string patchesFilename = SettingsManager::getSingleton().get("core.patchesLibrary");
+    std::string patchesFilename = SettingsManager::getSingleton().get("manager.PatchCompiler.patchesLibrary");
     if (!force)
     {
         // Check if we really need to relink
@@ -418,9 +418,10 @@ std::string generatePrettyLicense()
 
 std::string callGCC(const std::string& args)
 {
+    std::string CXX = SettingsManager::getSingleton().get("manager.PatchCompiler.CXX");
     std::string output;
     output.reserve(1024);
-    output += "g++ " + args + "\n";
+    output += CXX + " " + args + "\n";
     int exitCode;
 #ifdef _WIN32
     // Create pipes to redirect stdout and stderr of g++
@@ -441,7 +442,7 @@ std::string callGCC(const std::string& args)
     si.hStdError = pipeWriteHandle;
     si.hStdInput = win32::GetStdHandle(STD_INPUT_HANDLE);
     win32::PROCESS_INFORMATION pi = {0};
-    if (!win32::CreateProcess(nullptr, &("g++ " + args)[0], nullptr, nullptr, true, 0, nullptr, nullptr, &si, &pi))
+    if (!win32::CreateProcess(nullptr, &(CXX + " " + args)[0], nullptr, nullptr, true, 0, nullptr, nullptr, &si, &pi))
     {
         win32::CloseHandle(pipeWriteHandle);
         win32::CloseHandle(pipeReadHandle);
@@ -479,7 +480,7 @@ std::string callGCC(const std::string& args)
         char** _argv;
         try
         {
-            stringToArgcArgv("g++ " + args, &argc, &_argv);
+            stringToArgcArgv(CXX + " " + args, &argc, &_argv);
         }
         catch (std::exception e)
         {
@@ -493,7 +494,7 @@ std::string callGCC(const std::string& args)
         argv[argc] = NULL;
 
         // Screw memory deallocation. We are exec'ing!
-        posix::execvp("g++", argv);
+        posix::execvp(CXX.c_str(), argv);
         // We shouldn't get here if execvpe was successful
         posix::write(errorPipes[1], &errno, sizeof(errno)); // Write error to parent
         posix::close(errorPipes[1]);
@@ -528,7 +529,7 @@ std::string callGCC(const std::string& args)
         exitCode = 1;
 #endif
     if (exitCode != 0)
-        throw std::runtime_error("g++ failed. Output:\n" + output);
+        throw std::runtime_error(CXX + " failed. Output:\n" + output);
     return output;
 }
 

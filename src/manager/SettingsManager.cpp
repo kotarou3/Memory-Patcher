@@ -49,6 +49,7 @@ SettingsManager::SettingsManager()
     setDefault("manager.PatchCompiler.includePath", "include");
     setDefault("manager.PatchCompiler.objectsPath", "objects");
     setDefault("manager.PatchCompiler.libraryPath", ".");
+    setDefault("manager.PatchCompiler.CXX", "g++-4.7");
     setDefault("manager.PatchCompiler.customCXXFLAGS", "-Wall -Wextra -pedantic -pipe -fvisibility=hidden -mtune=core2 -D_GLIBCXX_USE_NANOSLEEP -ggdb -DDEBUG");
     setDefault("manager.PatchCompiler.customLDFLAGS", "");
 }
@@ -97,6 +98,7 @@ void SettingsManager::save(const std::string& filename) const
     if (!rootBranch->second.value.empty())
         rootJson["value"] = rootBranch->second.value;
     std::stack<std::pair<Json::Value*, const SettingsBranch*>> stack;
+    rootJson["children"] = Json::Value(Json::ValueType::objectValue);
     for (auto& childBranch : rootBranch->second.children)
         stack.push(std::make_pair(&rootJson["children"][childBranch.first], &childBranch.second));
     while (stack.size() > 0)
