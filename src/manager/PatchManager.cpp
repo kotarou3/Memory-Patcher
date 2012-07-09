@@ -21,6 +21,7 @@
 #include "PatchManager.h"
 #include "PatchCompiler.h"
 #include "PluginManager.h"
+#include "SettingsManager.h"
 #include "Socket.h"
 
 using namespace PatchData;
@@ -304,13 +305,7 @@ std::string PatchManager::compileHooksAndPatchPacks() const
         {
             CoreManager::getSingleton().sendPacket(Socket::ServerOpCode::PATCH_LIB_UNLOAD, {});
             output += PatchCompiler::linkObjects();
-            // TODO: Read from settings for the filename
-            std::string patchesFilename = "libpatches."
-            #ifdef _WIN32
-                "dll";
-            #else
-                "so";
-            #endif
+            std::string patchesFilename = SettingsManager::getSingleton().get("core.patchesLibrary");
             std::vector<uint8_t> data;
             serialiseIntegralTypeContinuousContainer(data, patchesFilename);
             CoreManager::getSingleton().sendPacket(Socket::ServerOpCode::PATCH_LIB_LOAD, data);

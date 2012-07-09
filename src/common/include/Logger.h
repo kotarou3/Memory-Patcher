@@ -30,7 +30,7 @@ class COMMON_EXPORT Logger final
         #ifdef ERROR
             #undef ERROR
         #endif
-        enum class Severity { ERROR_FATAL, ERROR, WARNING, NOTICE, DEBUG_MESSAGE };
+        enum class Severity { DEBUG_MESSAGE, NOTICE, WARNING, ERROR, ERROR_FATAL };
         using LoggingHandler_t = void (*)(Severity, const std::string&);
 
         void write(Severity severity, const std::string& message) const;

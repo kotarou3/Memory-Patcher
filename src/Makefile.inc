@@ -5,6 +5,10 @@ COMMON_LIB_NAME = common
 COMMON_DIR = common
 COMMON_LIB_LDFLAGS =
 
+JSONCPP_LIB_NAME = jsoncpp
+JSONCPP_DIR = jsoncpp
+JSONCPP_LIB_LDFLAGS =
+
 CXX = g++-4.7
 #CXXFLAGS = -Wall -Wextra -pedantic -pipe -fvisibility=hidden -fno-rtti -ffast-math -freciprocal-math -fomit-frame-pointer -mmmx -msse -msse2 -mfpmath=sse -mtune=core2 -D_GLIBCXX_USE_NANOSLEEP -O3 -funroll-loops
 CXXFLAGS = -Wall -Wextra -pedantic -pipe -fvisibility=hidden -fno-rtti -ffast-math -freciprocal-math -mmmx -msse -msse2 -mfpmath=sse -mtune=core2 -D_GLIBCXX_USE_NANOSLEEP -ggdb -DDEBUG
@@ -23,12 +27,10 @@ else
     CORE_LIB := lib$(CORE_LIB_NAME).so
 endif
 COMMON_LIB := lib$(COMMON_LIB_NAME).a
+JSONCPP_LIB := lib$(JSONCPP_LIB_NAME).a
 
 ifeq ($(OS),Windows_NT)
     COMMON_LIB_LDFLAGS += -lpsapi -ldbghelp -lntdll
 else
     COMMON_LIB_LDFLAGS += -ldl
 endif
-
-JSONCPP_LIB = libjsoncpp.a
-JSONCPP_DIR = jsoncpp

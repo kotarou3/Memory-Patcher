@@ -61,6 +61,7 @@ namespace posix
 #include "CoreManager.h"
 #include "PluginManager.h"
 #include "PatchManager.h"
+#include "SettingsManager.h"
 #include "Logger.h"
 
 #ifdef _WIN32
@@ -134,6 +135,14 @@ CoreManager& CoreManager::getSingleton()
 
 CoreManager::CoreManager()
 {
+    SettingsManager& settings = SettingsManager::getSingleton();
+    settings.setDefault("manager.CoreManager.applicationName", "./test"
+    #ifdef _WIN32
+        ".exe"
+    #endif
+    );
+    settings.setDefault("manager.CoreManager.applicationParameters", "");
+
 #ifdef _WIN32
     win32::WSADATA wsaData;
     win32::WSAStartup((2 << 8) + 2, &wsaData);
@@ -160,12 +169,8 @@ CoreManager::~CoreManager()
 
 CoreManager::CoreId CoreManager::startCore()
 {
-    std::string applicationName = "./test"
-    #ifdef _WIN32
-        ".exe"
-    #endif
-    ;
-    std::string parameters; // TODO: Read both of these from settings
+    std::string applicationName = SettingsManager::getSingleton().get("manager.CoreManager.applicationName");
+    std::string parameters = SettingsManager::getSingleton().get("manager.CoreManager.applicationParameters");
     const std::string& coreName("libcore"
     #ifdef _WIN32
         ".dll"

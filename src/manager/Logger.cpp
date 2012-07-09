@@ -19,41 +19,49 @@
 
 #include <cstdio>
 
+#include "SettingsManager.h"
 #include "Logger.h"
 
 Logger& Logger::getSingleton()
 {
     static Logger singleton;
+    static bool isDefaultSettingsSet = false;
+    if (!isDefaultSettingsSet)
+    {
+        SettingsManager::getSingleton().setDefault("manager.Logger.minimumSeverity", itos((int)Severity::NOTICE));
+        isDefaultSettingsSet = true;
+    }
     return singleton;
 }
 
 void Logger::write(Severity severity, const std::string& message) const
 {
-    // TODO: Read log severity from settings
-    std::lock_guard<std::recursive_mutex> logWriteLock(logWriteMutex_);
-    switch (severity)
+    Severity minimumSeverity = (Severity)std::stoi("0" + SettingsManager::getSingleton().get("manager.Logger.minimumSeverity"));
+    if (severity >= minimumSeverity)
     {
-        case Severity::ERROR_FATAL :
-            std::fprintf(stderr, "Fatal Error: %s\n", message.c_str());
-            break;
+        std::lock_guard<std::recursive_mutex> logWriteLock(logWriteMutex_);
+        switch (severity)
+        {
+            case Severity::ERROR_FATAL :
+                std::fprintf(stderr, "Fatal Error: %s\n", message.c_str());
+                break;
 
-        case Severity::ERROR :
-            std::fprintf(stderr, "Error: %s\n", message.c_str());
-            break;
+            case Severity::ERROR :
+                std::fprintf(stderr, "Error: %s\n", message.c_str());
+                break;
 
-        case Severity::WARNING :
-            std::fprintf(stderr, "Warning: %s\n", message.c_str());
-            break;
+            case Severity::WARNING :
+                std::fprintf(stderr, "Warning: %s\n", message.c_str());
+                break;
 
-        case Severity::NOTICE :
-            std::fprintf(stderr, "Notice: %s\n", message.c_str());
-            break;
+            case Severity::NOTICE :
+                std::fprintf(stderr, "Notice: %s\n", message.c_str());
+                break;
 
-        case Severity::DEBUG_MESSAGE :
-        #ifdef DEBUG
-            std::fprintf(stderr, "Debug: %s\n", message.c_str());
-        #endif
-            break;
+            case Severity::DEBUG_MESSAGE :
+                std::fprintf(stderr, "Debug: %s\n", message.c_str());
+                break;
+        }
     }
 
     std::lock_guard<std::recursive_mutex> loggingHandlersLock(loggingHandlersMutex_);

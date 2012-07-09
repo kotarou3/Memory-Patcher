@@ -54,6 +54,7 @@ namespace posix
 #endif
 
 #include "PatchCompiler.h"
+#include "SettingsManager.h"
 #include "Misc.h"
 
 namespace PatchCompiler
@@ -85,31 +86,33 @@ std::string compileHook(const Hook& hook, bool& isSkipped, bool force)
 {
     isSkipped = false;
     std::string source = generateHookSource(hook);
-    TRACE("CRC-32 of hook " << hook.name << ": 0x" << std::hex << calculateCrc32Checksum(std::vector<uint8_t>(source.begin(), source.end())) << std::dec);
-    if (!force)
+    uint32_t crc32 = calculateCrc32Checksum(std::vector<uint8_t>(source.begin(), source.end()));
+    std::string objectFilename = getObjectDirectory() + getHookSafename(hook.name) + ".o";
+    if (!force && crc32 == std::stoul("0" + SettingsManager::getSingleton().get("hooks." + hook.name + ".crc32")))
     {
-    #if 0
-        // TODO: read from settings of the checksum. If the generated checksum matches the one already
-        // in the settings, don't bother compiling
-        isSkipped = true;
-        return "";
-    #endif
+        // Check if the compiled object exists before we skip
+        std::FILE* objectFile = std::fopen(objectFilename.c_str(), "rb");
+        if (objectFile != nullptr)
+        {
+            std::fclose(objectFile);
+            isSkipped = true;
+            return "";
+        }
     }
 
     // Write the generated source to a file
     std::string sourceFilename = getObjectDirectory() + getHookSafename(hook.name) + ".cpp";
-    FILE* sourceFile = std::fopen(sourceFilename.c_str(), "wb");
+    std::FILE* sourceFile = std::fopen(sourceFilename.c_str(), "wb");
     std::fwrite(source.c_str(), 1, source.size(), sourceFile);
     std::fclose(sourceFile);
 
     // Compile the source
-    std::string objectFilename = getObjectDirectory() + getHookSafename(hook.name) + ".o";
     std::string output = callGCC("\"" + sourceFilename + "\" -c -o \"" + objectFilename + "\" " + getCXXFLAGS() + " " + getCustomCXXFLAGS());
 
     // Touch a file so `linkObjects()' knows to relink
     std::fclose(std::fopen((getObjectDirectory() + "modified").c_str(), "wb"));
 
-    // TODO: Save the checksum to the settings
+    SettingsManager::getSingleton().set("hooks." + hook.name + ".crc32", itos(crc32));
     return output;
 }
 
@@ -117,51 +120,47 @@ std::string compilePatchPack(const PatchPack& patchPack, bool& isSkipped, bool f
 {
     isSkipped = false;
     std::string source = generatePatchPackSource(patchPack);
-    TRACE("CRC-32 of patch pack " << patchPack.info.name << ": 0x" << std::hex << calculateCrc32Checksum(std::vector<uint8_t>(source.begin(), source.end())) << std::dec);
-    if (!force)
+    uint32_t crc32 = calculateCrc32Checksum(std::vector<uint8_t>(source.begin(), source.end()));
+    std::string objectFilename = getObjectDirectory() + getPatchPackSafename(patchPack.info.name) + ".o";
+    if (!force && crc32 == std::stoul("0" + SettingsManager::getSingleton().get("patchPacks." + patchPack.info.name + ".crc32")))
     {
-    #if 0
-        // TODO: read from settings of the checksum. If the generated checksum matches the one already
-        // in the settings, don't bother compiling
-        isSkipped = true;
-        return "";
-    #endif
+        // Check if the compiled object exists before we skip
+        std::FILE* objectFile = std::fopen(objectFilename.c_str(), "rb");
+        if (objectFile != nullptr)
+        {
+            std::fclose(objectFile);
+            isSkipped = true;
+            return "";
+        }
     }
 
     // Write the generated source to a file
     std::string sourceFilename = getObjectDirectory() + getPatchPackSafename(patchPack.info.name) + ".cpp";
-    FILE* sourceFile = std::fopen(sourceFilename.c_str(), "wb");
+    std::FILE* sourceFile = std::fopen(sourceFilename.c_str(), "wb");
     std::fwrite(source.c_str(), 1, source.size(), sourceFile);
     std::fclose(sourceFile);
 
     // Compile the source
-    std::string objectFilename = getObjectDirectory() + getPatchPackSafename(patchPack.info.name) + ".o";
     std::string output = callGCC("\"" + sourceFilename + "\" -c -o \"" + objectFilename + "\" " + getCXXFLAGS() + " " + getCustomCXXFLAGS());
 
     // Touch a file so `linkObjects()' knows to relink
     std::fclose(std::fopen((getObjectDirectory() + "modified").c_str(), "wb"));
 
-    // TODO: Save the checksum to the settings
+    SettingsManager::getSingleton().set("patchPacks." + patchPack.info.name + ".crc32", itos(crc32));
     return output;
 }
 
 std::string linkObjects(bool force)
 {
-    // TODO: Read from settings for the filename
-    std::string patchesFilename = "libpatches."
-    #ifdef _WIN32
-        "dll";
-    #else
-        "so";
-    #endif
+    std::string patchesFilename = SettingsManager::getSingleton().get("core.patchesLibrary");
     if (!force)
     {
         // Check if we really need to relink
-        FILE* patchesFile = std::fopen(patchesFilename.c_str(), "rb");
+        std::FILE* patchesFile = std::fopen(patchesFilename.c_str(), "rb");
         if (patchesFile != nullptr) // If `patchesFilename' exists...
         {
             std::fclose(patchesFile);
-            FILE* modifiedFile = std::fopen((getObjectDirectory() + "modified").c_str(), "rb");
+            std::FILE* modifiedFile = std::fopen((getObjectDirectory() + "modified").c_str(), "rb");
             if (modifiedFile != nullptr) // If "modified" exists...
             {
                 std::fclose(modifiedFile);
@@ -452,7 +451,7 @@ std::string callGCC(const std::string& args)
 
     // Convert `pipeReadHandle` to a FILE* and start reading from it
     int pipeReadFd = win32::_open_osfhandle((intptr_t)pipeReadHandle, _O_RDONLY | _O_BINARY);
-    FILE* pipeRead = posix::fdopen(pipeReadFd, "rb");
+    std::FILE* pipeRead = posix::fdopen(pipeReadFd, "rb");
     char outputBuffer[1024];
     while (fgets(outputBuffer, 1024, pipeRead) != nullptr)
         output += outputBuffer;
@@ -514,7 +513,7 @@ std::string callGCC(const std::string& args)
         throw std::runtime_error("Could not execvp: " + strError(err));
 
     // Convert `outputPipes[0]` to a FILE* and start reading from it
-    FILE* pipeRead = posix::fdopen(outputPipes[0], "rb");
+    std::FILE* pipeRead = posix::fdopen(outputPipes[0], "rb");
     char outputBuffer[1024];
     while (fgets(outputBuffer, 1024, pipeRead) != nullptr)
         output += outputBuffer;
@@ -535,35 +534,31 @@ std::string callGCC(const std::string& args)
 
 std::string getObjectDirectory()
 {
-    // TODO: Read from settings
-    if (posix::mkdir("objects") != 0)
+    std::string result = SettingsManager::getSingleton().get("manager.PatchCompiler.objectsPath");
+    if (posix::mkdir(result.c_str()) != 0)
         if (errno != EEXIST)
             throw std::runtime_error(strError(errno));
-    return "objects/";
+    return result + "/";
 }
 
 std::string getCXXFLAGS()
 {
-    // TODO: Read include path from settings
-    return "-m32 -std=gnu++11 -Iinclude";
+    return "-m32 -std=gnu++11 -I\"" + SettingsManager::getSingleton().get("manager.PatchCompiler.includePath") + "\"";
 }
 
 std::string getLDFLAGS()
 {
-    // TODO: Read library path from settings
-    return "-m32 -L. -lcore";
+    return "-m32 -L\"" + SettingsManager::getSingleton().get("manager.PatchCompiler.libraryPath") + "\" -lcore";
 }
 
 std::string getCustomCXXFLAGS()
 {
-    // TODO: Read from settings
-    return "-Wall -Wextra -pedantic -pipe -fvisibility=hidden -mtune=core2 -D_GLIBCXX_USE_NANOSLEEP -ggdb -DDEBUG";
+    return SettingsManager::getSingleton().get("manager.PatchCompiler.customCXXFLAGS");
 }
 
 std::string getCustomLDFLAGS()
 {
-    // TODO: Read from settings
-    return "";
+    return SettingsManager::getSingleton().get("manager.PatchCompiler.customLDFLAGS");
 }
 
 }
