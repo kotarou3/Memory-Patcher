@@ -216,6 +216,7 @@ std::map<std::string, SettingsManager::SettingsBranch>::iterator SettingsManager
             continue;
         auto branch = currentBranch->second.children.find(part);
         if (branch == currentBranch->second.children.end())
+        {
             if (!isCreateIfNotExists)
             {
                 currentBranch = settingsTree_.end();
@@ -226,6 +227,7 @@ std::map<std::string, SettingsManager::SettingsBranch>::iterator SettingsManager
                 branch = currentBranch->second.children.insert(std::make_pair(part, SettingsBranch())).first;
                 branch->second.parent = currentBranch;
             }
+        }
         currentBranch = branch;
     }
     return currentBranch;

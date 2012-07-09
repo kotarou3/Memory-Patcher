@@ -135,7 +135,7 @@ std::vector<PageInfo> enumerateSegments()
 
         // Read everything
         std::sscanf(line, "%08x-%08x %c%c%c%c %08x %02hhx:%02hhx %llu %n",
-                    &start, &end, &readable, &writable, &executable, &sharedOrPrivate, &fileOffset, &fileDeviceMajor, &fileDeviceMinor, &fileInode, &filename);
+                    (unsigned int*)&start, (unsigned int*)&end, &readable, &writable, &executable, &sharedOrPrivate, (unsigned int*)&fileOffset, &fileDeviceMajor, &fileDeviceMinor, &fileInode, (int*)&filename);
         filename += (size_t)line;
 
         PageInfo segment;

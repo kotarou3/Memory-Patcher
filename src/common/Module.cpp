@@ -154,9 +154,9 @@ void Module::open(const std::string& pathfile)
     updateInfo();
 }
 
-void Module::openByAddress(const uint8_t* address)
+void Module::openByAddress(const uint8_t* /*address*/)
 {
-    assert(false);
+    throw std::logic_error("Module::openByAddress() not implemented");
 }
 
 void Module::unload(bool force)

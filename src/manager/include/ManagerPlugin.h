@@ -35,8 +35,8 @@ class ManagerPlugin
 
     protected:
         virtual void onEnable() {};
-        virtual void onDisable(bool isNoNotifyCores) {};
-        virtual void onSettingChange(const Info& info) {};
+        virtual void onDisable(bool /*isNoNotifyCores*/) {};
+        virtual void onSettingChange(const Info& /*info*/) {};
 
         friend class PluginManager;
 };

@@ -30,7 +30,7 @@ class CorePlugin
     protected:
         virtual void onEnable() {};
         virtual void onDisable() {};
-        virtual void onSettingChange(const Info& info) {};
+        virtual void onSettingChange(const Info& /*info*/) {};
 
         friend class PluginLoader;
 };

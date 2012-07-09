@@ -434,6 +434,9 @@ bool SpecialSearch::doSearch(const uint8_t* address) const
 
         case Type::DATA_POINTER :
             return getTypeData<DataPointerSpecialSearch>().doSearch(address);
+
+        case Type::BLANK :
+            break;
     }
     assert(false); // Should never get here
 }
@@ -606,7 +609,7 @@ bool UnnamedAbsoluteIndirectFunctionCallSpecialSearch::doSearch(const uint8_t* a
 
     // Create a data pointer special search to do the actual checking
     DataPointerSpecialSearch dataPointerSpecialSearch;
-    dataPointerSpecialSearch.searchBytes = { -1, -1, -1, -1 };
+    dataPointerSpecialSearch.searchBytes = { (uint8_t)-1, (uint8_t)-1, (uint8_t)-1, (uint8_t)-1 };
     dataPointerSpecialSearch.ignoredSearchBytesRvas = { 0, 1, 2, 3 };
 
     // We need to put a data pointer special search inside the data pointer special search to check if the function matches

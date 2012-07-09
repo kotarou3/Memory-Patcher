@@ -10,8 +10,8 @@ JSONCPP_DIR = jsoncpp
 JSONCPP_LIB_LDFLAGS =
 
 CXX = g++-4.7
-#CXXFLAGS = -Wall -Wextra -pedantic -pipe -fvisibility=hidden -fno-rtti -ffast-math -freciprocal-math -fomit-frame-pointer -mmmx -msse -msse2 -mfpmath=sse -mtune=core2 -D_GLIBCXX_USE_NANOSLEEP -O3 -funroll-loops
-CXXFLAGS = -Wall -Wextra -pedantic -pipe -fvisibility=hidden -fno-rtti -ffast-math -freciprocal-math -mmmx -msse -msse2 -mfpmath=sse -mtune=core2 -D_GLIBCXX_USE_NANOSLEEP -ggdb -DDEBUG
+#CXXFLAGS = -Wall -Wextra -Wno-missing-field-initializers -pedantic -pipe -fvisibility=hidden -fno-rtti -ffast-math -freciprocal-math -fomit-frame-pointer -mmmx -msse -msse2 -mfpmath=sse -mtune=core2 -D_GLIBCXX_USE_NANOSLEEP -O3 -funroll-loops
+CXXFLAGS = -Wall -Wextra -Wno-missing-field-initializers -pedantic -pipe -fvisibility=hidden -fno-rtti -ffast-math -freciprocal-math -mmmx -msse -msse2 -mfpmath=sse -mtune=core2 -D_GLIBCXX_USE_NANOSLEEP -ggdb -DDEBUG
 AR = ar
 RANLIB = ranlib
 
