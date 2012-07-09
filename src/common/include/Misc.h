@@ -92,6 +92,9 @@ template <typename T>
 template <> inline std::string itos<char>(const char t) { return itos((int16_t)t); }
 template <> inline std::string itos<unsigned char>(const unsigned char t) { return itos((uint16_t)t); }
 
+// Split a string in to tokens
+std::vector<std::string> split(const std::string& delims);
+
 // Convert binary data to hex string
 template <class C>
     inline std::string btos(const C& c)

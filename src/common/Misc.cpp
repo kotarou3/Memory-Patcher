@@ -57,6 +57,19 @@ namespace posix
 }
 #endif
 
+std::vector<std::string> split(const std::string& string, const std::string& delims)
+{
+    std::vector<std::string> result;
+    std::string::size_type match = -1;
+    do
+    {
+        std::string::size_type prevMatch = ++match;
+        match = string.find_first_of(delims, match);
+        result.push_back(string.substr(prevMatch, match - prevMatch));
+    } while (match != std::string::npos);
+    return result;
+}
+
 #ifdef _WIN32
 std::string strErrorWin32(int error)
 {

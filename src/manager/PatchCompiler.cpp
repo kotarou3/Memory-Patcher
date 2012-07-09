@@ -36,41 +36,6 @@ namespace posix
 {
     #include <direct.h>
     #include <fcntl.h>
-    char* strtok_r(char* str, const char* delim, char** saveptr)
-    {
-    #ifdef MINGW_HAS_SECURE_API
-        return strtok_s(str, delim, saveptr);
-    #else
-        // POSIX says nothing about input validation, so we make no attempt at it
-
-        // `saveptr' contains the address after the previous token
-        if (str == nullptr)
-            str = *saveptr;
-
-        // Set `start' past the leading delimiters (if any)
-        char* start = str + std::strspn(str, delim);
-        if (*start == 0)
-        {
-            // If the first character after the delimiters was the end of the string,
-            // we don't have any tokens left!
-            *saveptr = start; // So set `saveptr' to the end of the string
-            return nullptr;
-        }
-
-        // Find the location of the next delimiter
-        char* end = std::strpbrk(start, delim);
-        if (end == nullptr)
-            // That's all the tokens in this string!
-            *saveptr = std::strchr(str, 0); // So set `saveptr' to the end of the string
-        else
-        {
-            // Terminate the string at the delimiter so `start' points to a token
-            *end = 0;
-            *saveptr = end + 1;
-        }
-        return start;
-    #endif
-    }
     using ::fdopen;
 }
 #else
@@ -81,7 +46,6 @@ namespace posix
     #include <sys/stat.h>
     #include <fcntl.h>
     #include <dirent.h>
-    using ::strtok_r;
     using ::fdopen;
     using ::pid_t; // We shouldn't need to do this, but <string> causes everything in <pthreads.h> to be included in the global namespace
     int mkdir(const char* path) { return mkdir(path, 755); }
@@ -420,8 +384,21 @@ std::string generatePatchPackSource(const PatchPack& patchPack)
 
 std::string getLicense()
 {
-    // TODO: License
-    return "";
+    return
+    "This file is part of Memory Patcher.\n"
+    "\n"
+    "Memory Patcher is free software: you can redistribute it and/or modify\n"
+    "it under the terms of the GNU Lesser General Public License as published by\n"
+    "the Free Software Foundation, either version 3 of the License, or\n"
+    "(at your option) any later version.\n"
+    "\n"
+    "Memory Patcher is distributed in the hope that it will be useful,\n"
+    "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+    "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n"
+    "GNU Lesser General Public License for more details.\n"
+    "\n"
+    "You should have received a copy of the GNU Lesser General Public License\n"
+    "along with Memory Patcher. If not, see <http://www.gnu.org/licenses/>.";
 }
 
 std::string generatePrettyLicense()
@@ -429,15 +406,13 @@ std::string generatePrettyLicense()
     std::string output;
     output.reserve(1024);
 
-    std::string license = getLicense();
     output += "/*\n";
-    char* context;
-    char* line = posix::strtok_r(&license[0], "\n", &context);
-    while (line != nullptr)
-    {
-        output += " * "; output += line; output += "\n";
-        line = posix::strtok_r(nullptr, "\n", &context);
-    }
+    std::vector<std::string> lines = split(getLicense(), "\n");
+    for (const auto& line : lines)
+        if (line.empty())
+            output += "\n";
+        else
+            output += "    " + line + "\n";
     output += "*/\n";
     return output;
 }
