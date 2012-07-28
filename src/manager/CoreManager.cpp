@@ -136,12 +136,12 @@ CoreManager& CoreManager::getSingleton()
 CoreManager::CoreManager()
 {
     SettingsManager& settings = SettingsManager::getSingleton();
-    settings.setDefault("manager.CoreManager.applicationName", "./test"
+    settings.setDefault("CoreManager.applicationName", "./test"
     #ifdef _WIN32
         ".exe"
     #endif
     );
-    settings.setDefault("manager.CoreManager.applicationParameters", "");
+    settings.setDefault("CoreManager.applicationParameters", "");
 
 #ifdef _WIN32
     win32::WSADATA wsaData;
@@ -169,8 +169,8 @@ CoreManager::~CoreManager()
 
 CoreManager::CoreId CoreManager::startCore()
 {
-    std::string applicationName = SettingsManager::getSingleton().get("manager.CoreManager.applicationName");
-    std::string parameters = SettingsManager::getSingleton().get("manager.CoreManager.applicationParameters");
+    std::string applicationName = SettingsManager::getSingleton().get("CoreManager.applicationName");
+    std::string parameters = SettingsManager::getSingleton().get("CoreManager.applicationParameters");
     const std::string& coreName("libcore"
     #ifdef _WIN32
         ".dll"

@@ -40,18 +40,18 @@ SettingsManager::SettingsManager()
     branch->second.parent = branch;
 
     // PatchCompiler default settings set here because it has no constructor
-    setDefault("manager.PatchCompiler.patchesLibrary", "libpatches."
+    setDefault("PatchCompiler.patchesLibrary", "libpatches."
     #ifdef _WIN32
         "dll");
     #else
         "so");
     #endif
-    setDefault("manager.PatchCompiler.includePath", "include");
-    setDefault("manager.PatchCompiler.objectsPath", "objects");
-    setDefault("manager.PatchCompiler.libraryPath", ".");
-    setDefault("manager.PatchCompiler.CXX", "g++-4.7");
-    setDefault("manager.PatchCompiler.customCXXFLAGS", "-Wall -Wextra -pedantic -pipe -fvisibility=hidden -mtune=core2 -D_GLIBCXX_USE_NANOSLEEP -ggdb -DDEBUG");
-    setDefault("manager.PatchCompiler.customLDFLAGS", "");
+    setDefault("PatchCompiler.includePath", "include");
+    setDefault("PatchCompiler.objectsPath", "objects");
+    setDefault("PatchCompiler.libraryPath", ".");
+    setDefault("PatchCompiler.CXX", "g++-4.7");
+    setDefault("PatchCompiler.customCXXFLAGS", "-Wall -Wextra -pedantic -pipe -fvisibility=hidden -mtune=core2 -D_GLIBCXX_USE_NANOSLEEP -ggdb -DDEBUG");
+    setDefault("PatchCompiler.customLDFLAGS", "");
 }
 
 SettingsManager::~SettingsManager()

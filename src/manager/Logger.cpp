@@ -28,7 +28,7 @@ Logger& Logger::getSingleton()
     static bool isDefaultSettingsSet = false;
     if (!isDefaultSettingsSet)
     {
-        SettingsManager::getSingleton().setDefault("manager.Logger.minimumSeverity", itos((int)Severity::NOTICE));
+        SettingsManager::getSingleton().setDefault("Logger.minimumSeverity", itos((int)Severity::NOTICE));
         isDefaultSettingsSet = true;
     }
     return singleton;
@@ -36,7 +36,7 @@ Logger& Logger::getSingleton()
 
 void Logger::write(Severity severity, const std::string& message) const
 {
-    Severity minimumSeverity = (Severity)std::stoi("0" + SettingsManager::getSingleton().get("manager.Logger.minimumSeverity"));
+    Severity minimumSeverity = (Severity)std::stoi("0" + SettingsManager::getSingleton().get("Logger.minimumSeverity"));
     if (severity >= minimumSeverity)
     {
         std::lock_guard<std::recursive_mutex> logWriteLock(logWriteMutex_);

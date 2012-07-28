@@ -88,7 +88,7 @@ std::string compileHook(const Hook& hook, bool& isSkipped, bool force)
     std::string source = generateHookSource(hook);
     uint32_t crc32 = calculateCrc32Checksum(std::vector<uint8_t>(source.begin(), source.end()));
     std::string objectFilename = getObjectDirectory() + getHookSafename(hook.name) + ".o";
-    if (!force && crc32 == std::stoul("0" + SettingsManager::getSingleton().get("manager.hooks." + hook.name + ".crc32")))
+    if (!force && crc32 == std::stoul("0" + SettingsManager::getSingleton().get("hooks." + hook.name + ".crc32")))
     {
         // Check if the compiled object exists before we skip
         std::FILE* objectFile = std::fopen(objectFilename.c_str(), "rb");
@@ -112,7 +112,7 @@ std::string compileHook(const Hook& hook, bool& isSkipped, bool force)
     // Touch a file so `linkObjects()' knows to relink
     std::fclose(std::fopen((getObjectDirectory() + "modified").c_str(), "wb"));
 
-    SettingsManager::getSingleton().set("manager.hooks." + hook.name + ".crc32", itos(crc32));
+    SettingsManager::getSingleton().set("hooks." + hook.name + ".crc32", itos(crc32));
     return output;
 }
 
@@ -122,7 +122,7 @@ std::string compilePatchPack(const PatchPack& patchPack, bool& isSkipped, bool f
     std::string source = generatePatchPackSource(patchPack);
     uint32_t crc32 = calculateCrc32Checksum(std::vector<uint8_t>(source.begin(), source.end()));
     std::string objectFilename = getObjectDirectory() + getPatchPackSafename(patchPack.info.name) + ".o";
-    if (!force && crc32 == std::stoul("0" + SettingsManager::getSingleton().get("manager.patchPacks." + patchPack.info.name + ".crc32")))
+    if (!force && crc32 == std::stoul("0" + SettingsManager::getSingleton().get("patchPacks." + patchPack.info.name + ".crc32")))
     {
         // Check if the compiled object exists before we skip
         std::FILE* objectFile = std::fopen(objectFilename.c_str(), "rb");
@@ -146,13 +146,13 @@ std::string compilePatchPack(const PatchPack& patchPack, bool& isSkipped, bool f
     // Touch a file so `linkObjects()' knows to relink
     std::fclose(std::fopen((getObjectDirectory() + "modified").c_str(), "wb"));
 
-    SettingsManager::getSingleton().set("manager.patchPacks." + patchPack.info.name + ".crc32", itos(crc32));
+    SettingsManager::getSingleton().set("patchPacks." + patchPack.info.name + ".crc32", itos(crc32));
     return output;
 }
 
 std::string linkObjects(bool force)
 {
-    std::string patchesFilename = SettingsManager::getSingleton().get("manager.PatchCompiler.patchesLibrary");
+    std::string patchesFilename = SettingsManager::getSingleton().get("PatchCompiler.patchesLibrary");
     if (!force)
     {
         // Check if we really need to relink
@@ -418,7 +418,7 @@ std::string generatePrettyLicense()
 
 std::string callGCC(const std::string& args)
 {
-    std::string CXX = SettingsManager::getSingleton().get("manager.PatchCompiler.CXX");
+    std::string CXX = SettingsManager::getSingleton().get("PatchCompiler.CXX");
     std::string output;
     output.reserve(1024);
     output += CXX + " " + args + "\n";
@@ -535,7 +535,7 @@ std::string callGCC(const std::string& args)
 
 std::string getObjectDirectory()
 {
-    std::string result = SettingsManager::getSingleton().get("manager.PatchCompiler.objectsPath");
+    std::string result = SettingsManager::getSingleton().get("PatchCompiler.objectsPath");
     if (posix::mkdir(result.c_str()) != 0)
         if (errno != EEXIST)
             throw std::runtime_error(strError(errno));
@@ -544,22 +544,22 @@ std::string getObjectDirectory()
 
 std::string getCXXFLAGS()
 {
-    return "-m32 -std=gnu++11 -I\"" + SettingsManager::getSingleton().get("manager.PatchCompiler.includePath") + "\"";
+    return "-m32 -std=gnu++11 -I\"" + SettingsManager::getSingleton().get("PatchCompiler.includePath") + "\"";
 }
 
 std::string getLDFLAGS()
 {
-    return "-m32 -L\"" + SettingsManager::getSingleton().get("manager.PatchCompiler.libraryPath") + "\" -lcore";
+    return "-m32 -L\"" + SettingsManager::getSingleton().get("PatchCompiler.libraryPath") + "\" -lcore";
 }
 
 std::string getCustomCXXFLAGS()
 {
-    return SettingsManager::getSingleton().get("manager.PatchCompiler.customCXXFLAGS");
+    return SettingsManager::getSingleton().get("PatchCompiler.customCXXFLAGS");
 }
 
 std::string getCustomLDFLAGS()
 {
-    return SettingsManager::getSingleton().get("manager.PatchCompiler.customLDFLAGS");
+    return SettingsManager::getSingleton().get("PatchCompiler.customLDFLAGS");
 }
 
 }
