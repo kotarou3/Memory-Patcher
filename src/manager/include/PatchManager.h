@@ -32,19 +32,19 @@ class MANAGER_EXPORT PatchManager final
 {
     public:
         void registerHook(const PatchData::Hook& hook);
-        void unregisterHook(const std::string& name, bool isNoNotifyCores = false);
-        void unregisterAllHooks(bool isNoNotifyCores = false);
+        void unregisterHook(const std::string& name);
+        void unregisterAllHooks();
         bool isHookRegistered(const std::string& name) const noexcept;
 
         void addPatchPack(const PatchData::PatchPack& patchPack);
-        void removePatchPack(const std::string& name, bool isNoNotifyCores = false);
-        void removeAllPatchPacks(bool isNoNotifyCores = false);
+        void removePatchPack(const std::string& name);
+        void removeAllPatchPacks();
         bool isPatchPackLoaded(const std::string& name) const noexcept;
 
         void enablePatchPack(const std::string& name);
         void enableAllPatchPacks();
-        void disablePatchPack(const std::string& name, bool isNoNotifyCores = false);
-        void disableAllPatchPacks(bool isNoNotifyCores = false);
+        void disablePatchPack(const std::string& name);
+        void disableAllPatchPacks();
         bool isPatchPackEnabled(const std::string& name) const;
 
         const std::vector<PatchData::Hook> getHooks() const;
@@ -67,13 +67,12 @@ class MANAGER_EXPORT PatchManager final
         void updateCoresAboutAllPatchPacks() const;
 
         static PatchManager& getSingleton();
-        static bool getIsSingletonInitialised();
 
     private:
         PatchManager() = default;
         PatchManager(const PatchManager&) = delete;
         PatchManager& operator=(const PatchManager&) = delete;
-        ~PatchManager();
+        ~PatchManager() = default;
 
         class Hook_ final
         {
@@ -89,12 +88,12 @@ class MANAGER_EXPORT PatchManager final
         std::vector<PatchData::PatchPack>::const_iterator getIteratorToPatchPack_(const std::string& name) const;
         std::vector<PatchData::PatchPack>::iterator getIteratorToPatchPack_(const std::string& name);
 
-        std::vector<PatchData::PatchPack>::iterator removePatchPack_(std::vector<PatchData::PatchPack>::iterator patchPack, bool isNoNotifyCores = false);
+        std::vector<PatchData::PatchPack>::iterator removePatchPack_(std::vector<PatchData::PatchPack>::iterator patchPack);
 
-        std::vector<Hook_>::iterator unregisterHook_(std::vector<Hook_>::iterator hook, bool isNoNotifyCores = false);
+        std::vector<Hook_>::iterator unregisterHook_(std::vector<Hook_>::iterator hook);
 
         void enablePatchPack_(PatchData::PatchPack& patchPack);
-        void disablePatchPack_(PatchData::PatchPack& patchPack, bool isNoNotifyCores = false);
+        void disablePatchPack_(PatchData::PatchPack& patchPack);
 
         void setPatchPackExtraSettingValue_(PatchData::PatchPack& patchPack, const std::string& extraSettingLabel, const std::string& value);
         void restorePatchPackExtraSettingDefaults_(PatchData::PatchPack& patchPack);
@@ -104,13 +103,8 @@ class MANAGER_EXPORT PatchManager final
         void updateCoreAboutPatchPack_(const CoreManager::CoreId coreId, const PatchData::PatchPack& patchPack) const;
         void updateCoresAboutPatchPack_(const PatchData::PatchPack& patchPack) const;
 
-        void checkSingletonAndIsInitialised_() const;
-
         std::vector<Hook_> hooks_;
         std::vector<PatchData::PatchPack> patchPacks_;
-
-        static PatchManager singleton;
-        static bool isSingletonInitialised;
 };
 
 #endif

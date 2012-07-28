@@ -127,9 +127,9 @@ namespace
 
 }
 
-CoreManager CoreManager::singleton;
 CoreManager& CoreManager::getSingleton()
 {
+    static CoreManager singleton;
     return singleton;
 }
 

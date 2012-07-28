@@ -35,13 +35,13 @@ class ManagerPlugin
 
     protected:
         virtual void onEnable() {};
-        virtual void onDisable(bool /*isNoNotifyCores*/) {};
+        virtual void onDisable(bool /*isExiting*/) {};
         virtual void onSettingChange(const Info& /*info*/) {};
 
         friend class PluginManager;
 };
 
-#if defined (BUILD_MANAGER)
+#ifdef BUILD_MANAGER
     using createInstance_t = std::unique_ptr<ManagerPlugin> (*)();
 #else
     extern "C" __attribute__ ((visibility ("default"))) std::unique_ptr<ManagerPlugin> createInstance();

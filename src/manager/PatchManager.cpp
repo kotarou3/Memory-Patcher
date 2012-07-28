@@ -26,31 +26,14 @@
 
 using namespace PatchData;
 
-PatchManager PatchManager::singleton;
-bool PatchManager::isSingletonInitialised = true;
 PatchManager& PatchManager::getSingleton()
 {
+    static PatchManager singleton;
     return singleton;
-}
-
-bool PatchManager::getIsSingletonInitialised()
-{
-    return isSingletonInitialised;
-}
-
-PatchManager::~PatchManager()
-{
-    removeAllPatchPacks(true);
-    unregisterAllHooks(true);
-
-    if (this == &singleton)
-        isSingletonInitialised = false;
 }
 
 void PatchManager::registerHook(const Hook& hook)
 {
-    checkSingletonAndIsInitialised_();
-
     if (hook.name.empty())
         throw std::logic_error("The hook name cannot be empty.");
 
@@ -78,26 +61,20 @@ void PatchManager::registerHook(const Hook& hook)
     updateCoresAboutHook_(hook_);
 }
 
-void PatchManager::unregisterHook(const std::string& name, bool isNoNotifyCores)
+void PatchManager::unregisterHook(const std::string& name)
 {
-    checkSingletonAndIsInitialised_();
-
-    unregisterHook_(getIteratorToHook_(name), isNoNotifyCores);
+    unregisterHook_(getIteratorToHook_(name));
 }
 
-void PatchManager::unregisterAllHooks(bool isNoNotifyCores)
+void PatchManager::unregisterAllHooks()
 {
-    checkSingletonAndIsInitialised_();
-
     auto hook = hooks_.begin();
     while (hook != hooks_.end())
-        hook = unregisterHook_(hook, isNoNotifyCores);
+        hook = unregisterHook_(hook);
 }
 
 bool PatchManager::isHookRegistered(const std::string& name) const noexcept
 {
-    checkSingletonAndIsInitialised_();
-
     if (getIteratorToHookNoThrow_(name) != hooks_.end())
         return true;
     return false;
@@ -105,8 +82,6 @@ bool PatchManager::isHookRegistered(const std::string& name) const noexcept
 
 void PatchManager::addPatchPack(const PatchPack& patchPack)
 {
-    checkSingletonAndIsInitialised_();
-
     if (patchPack.info.name.empty())
         throw std::logic_error("The patch pack name cannot be empty.");
     for (const auto& patchPack_ : patchPacks_)
@@ -153,26 +128,20 @@ void PatchManager::addPatchPack(const PatchPack& patchPack)
         hookUsed->dependantPatchPacks.push_back(copiedPatchPack);
 }
 
-void PatchManager::removePatchPack(const std::string& name, bool isNoNotifyCores)
+void PatchManager::removePatchPack(const std::string& name)
 {
-    checkSingletonAndIsInitialised_();
-
-    removePatchPack_(getIteratorToPatchPack_(name), isNoNotifyCores);
+    removePatchPack_(getIteratorToPatchPack_(name));
 }
 
-void PatchManager::removeAllPatchPacks(bool isNoNotifyCores)
+void PatchManager::removeAllPatchPacks()
 {
-    checkSingletonAndIsInitialised_();
-
     auto patchPack = patchPacks_.begin();
     while (patchPack != patchPacks_.end())
-        patchPack = removePatchPack_(patchPack, isNoNotifyCores);
+        patchPack = removePatchPack_(patchPack);
 }
 
 bool PatchManager::isPatchPackLoaded(const std::string& name) const noexcept
 {
-    checkSingletonAndIsInitialised_();
-
     if (getIteratorToPatchPackNoThrow_(name) != patchPacks_.end())
         return true;
     return false;
@@ -180,45 +149,33 @@ bool PatchManager::isPatchPackLoaded(const std::string& name) const noexcept
 
 void PatchManager::enablePatchPack(const std::string& name)
 {
-    checkSingletonAndIsInitialised_();
-
     enablePatchPack_(*getIteratorToPatchPack_(name));
 }
 
 void PatchManager::enableAllPatchPacks()
 {
-    checkSingletonAndIsInitialised_();
-
     for (auto& patchPack : patchPacks_)
         enablePatchPack_(patchPack);
 }
 
-void PatchManager::disablePatchPack(const std::string& name, bool isNoNotifyCores)
+void PatchManager::disablePatchPack(const std::string& name)
 {
-    checkSingletonAndIsInitialised_();
-
-    disablePatchPack_(*getIteratorToPatchPack_(name), isNoNotifyCores);
+    disablePatchPack_(*getIteratorToPatchPack_(name));
 }
 
-void PatchManager::disableAllPatchPacks(bool isNoNotifyCores)
+void PatchManager::disableAllPatchPacks()
 {
-    checkSingletonAndIsInitialised_();
-
     for (auto& patchPack : patchPacks_)
-        disablePatchPack_(patchPack, isNoNotifyCores);
+        disablePatchPack_(patchPack);
 }
 
 bool PatchManager::isPatchPackEnabled(const std::string& name) const
 {
-    checkSingletonAndIsInitialised_();
-
     return getIteratorToPatchPack_(name)->info.isCurrentlyEnabled;
 }
 
 const std::vector<Hook> PatchManager::getHooks() const
 {
-    checkSingletonAndIsInitialised_();
-
     std::vector<Hook> result;
     result.reserve(hooks_.size());
     for (const auto& hook : hooks_)
@@ -228,51 +185,37 @@ const std::vector<Hook> PatchManager::getHooks() const
 
 const Hook& PatchManager::getHook(const std::string& name) const
 {
-    checkSingletonAndIsInitialised_();
-
     return getIteratorToHook_(name)->hook;
 }
 
 const std::vector<PatchPack>& PatchManager::getPatchPacks() const
 {
-    checkSingletonAndIsInitialised_();
-
     return patchPacks_;
 }
 
 const PatchPack& PatchManager::getPatchPack(const std::string& name) const
 {
-    checkSingletonAndIsInitialised_();
-
     return *getIteratorToPatchPack_(name);
 }
 
 void PatchManager::setPatchPackExtraSettingValue(const std::string& name, const std::string& extraSettingLabel, const std::string& value)
 {
-    checkSingletonAndIsInitialised_();
-
     setPatchPackExtraSettingValue_(*getIteratorToPatchPack_(name), extraSettingLabel, value);
 }
 
 void PatchManager::restorePatchPackExtraSettingDefaults(const std::string& name)
 {
-    checkSingletonAndIsInitialised_();
-
     restorePatchPackExtraSettingDefaults_(*getIteratorToPatchPack_(name));
 }
 
 void PatchManager::restoreAllPatchPackExtraSettingDefaults()
 {
-    checkSingletonAndIsInitialised_();
-
     for (auto& patchPack : patchPacks_)
         restorePatchPackExtraSettingDefaults_(patchPack);
 }
 
 std::string PatchManager::compileHooksAndPatchPacks() const
 {
-    checkSingletonAndIsInitialised_();
-
     std::string output;
     output.reserve(1024);
     try
@@ -321,60 +264,44 @@ std::string PatchManager::compileHooksAndPatchPacks() const
 
 void PatchManager::updateCoreAboutHook(const CoreManager::CoreId coreId, const std::string& name) const
 {
-    checkSingletonAndIsInitialised_();
-
     updateCoreAboutHook_(coreId, *getIteratorToHook_(name));
 }
 
 void PatchManager::updateCoresAboutHook(const std::string& name) const
 {
-    checkSingletonAndIsInitialised_();
-
     updateCoresAboutHook_(*getIteratorToHook_(name));
 }
 
 void PatchManager::updateCoreAboutAllHooks(const CoreManager::CoreId coreId) const
 {
-    checkSingletonAndIsInitialised_();
-
     for (const auto& hook : hooks_)
         updateCoreAboutHook_(coreId, hook);
 }
 
 void PatchManager::updateCoresAboutAllHooks() const
 {
-    checkSingletonAndIsInitialised_();
-
     for (const auto& hook : hooks_)
         updateCoresAboutHook_(hook);
 }
 
 void PatchManager::updateCoreAboutPatchPack(const CoreManager::CoreId coreId, const std::string& name) const
 {
-    checkSingletonAndIsInitialised_();
-
     updateCoreAboutPatchPack_(coreId, *getIteratorToPatchPack_(name));
 }
 
 void PatchManager::updateCoresAboutPatchPack(const std::string& name) const
 {
-    checkSingletonAndIsInitialised_();
-
     updateCoresAboutPatchPack_(*getIteratorToPatchPack_(name));
 }
 
 void PatchManager::updateCoreAboutAllPatchPacks(const CoreManager::CoreId coreId) const
 {
-    checkSingletonAndIsInitialised_();
-
     for (const auto& patchPack : patchPacks_)
         updateCoreAboutPatchPack_(coreId, patchPack);
 }
 
 void PatchManager::updateCoresAboutAllPatchPacks() const
 {
-    checkSingletonAndIsInitialised_();
-
     for (const auto& patchPack : patchPacks_)
         updateCoresAboutPatchPack_(patchPack);
 }
@@ -432,7 +359,7 @@ std::vector<PatchPack>::iterator PatchManager::getIteratorToPatchPack_(const std
     return result;
 }
 
-std::vector<PatchManager::Hook_>::iterator PatchManager::unregisterHook_(std::vector<PatchManager::Hook_>::iterator hook, bool isNoNotifyCores)
+std::vector<PatchManager::Hook_>::iterator PatchManager::unregisterHook_(std::vector<PatchManager::Hook_>::iterator hook)
 {
     // Remove all patches that use the hook
     auto dependantPatchPackIterator = hook->dependantPatchPacks.begin();
@@ -440,23 +367,20 @@ std::vector<PatchManager::Hook_>::iterator PatchManager::unregisterHook_(std::ve
     {
         auto dependantPatchPack = *dependantPatchPackIterator;
         dependantPatchPackIterator = hook->dependantPatchPacks.erase(dependantPatchPackIterator);
-        removePatchPack_(dependantPatchPack, isNoNotifyCores);
+        removePatchPack_(dependantPatchPack);
     }
 
-    if (!isNoNotifyCores)
-    {
-        // Tell the cores
-        std::vector<uint8_t> data;
-        data.reserve(hook->hook.name.size());
-        serialiseIntegralTypeContinuousContainer(data, hook->hook.name);
-        CoreManager::getSingleton().sendPacket(Socket::ServerOpCode::PATCH_HOOK_REMOVE, data);
-    }
+    // Tell the cores
+    std::vector<uint8_t> data;
+    data.reserve(hook->hook.name.size());
+    serialiseIntegralTypeContinuousContainer(data, hook->hook.name);
+    CoreManager::getSingleton().sendPacket(Socket::ServerOpCode::PATCH_HOOK_REMOVE, data);
 
     // Remove the hook
     return hooks_.erase(hook);
 }
 
-std::vector<PatchPack>::iterator PatchManager::removePatchPack_(std::vector<PatchPack>::iterator patchPack, bool isNoNotifyCores)
+std::vector<PatchPack>::iterator PatchManager::removePatchPack_(std::vector<PatchPack>::iterator patchPack)
 {
     // TODO: Save to settings
     for (const auto& patch : patchPack->patches)
@@ -470,16 +394,13 @@ std::vector<PatchPack>::iterator PatchManager::removePatchPack_(std::vector<Patc
                     break;
                 }
         }
-    disablePatchPack_(*patchPack, isNoNotifyCores);
+    disablePatchPack_(*patchPack);
 
-    if (!isNoNotifyCores)
-    {
-        // Tell the cores
-        std::vector<uint8_t> data;
-        data.reserve(patchPack->info.name.size());
-        serialiseIntegralTypeContinuousContainer(data, patchPack->info.name);
-        CoreManager::getSingleton().sendPacket(Socket::ServerOpCode::PATCH_PACK_REMOVE, data);
-    }
+    // Tell the cores
+    std::vector<uint8_t> data;
+    data.reserve(patchPack->info.name.size());
+    serialiseIntegralTypeContinuousContainer(data, patchPack->info.name);
+    CoreManager::getSingleton().sendPacket(Socket::ServerOpCode::PATCH_PACK_REMOVE, data);
 
     return patchPacks_.erase(patchPack);
 }
@@ -490,11 +411,10 @@ void PatchManager::enablePatchPack_(PatchPack& patchPack)
     updateCoresAboutPatchPack_(patchPack);
 }
 
-void PatchManager::disablePatchPack_(PatchPack& patchPack, bool isNoNotifyCores)
+void PatchManager::disablePatchPack_(PatchPack& patchPack)
 {
     patchPack.info.isCurrentlyEnabled = false;
-    if (!isNoNotifyCores)
-        updateCoresAboutPatchPack_(patchPack);
+    updateCoresAboutPatchPack_(patchPack);
 }
 
 void PatchManager::setPatchPackExtraSettingValue_(PatchPack& patchPack, const std::string& extraSettingLabel, const std::string& value)
@@ -550,10 +470,4 @@ void PatchManager::updateCoresAboutPatchPack_(const PatchData::PatchPack& patchP
     serialiseIntegralTypeContinuousContainer(data, patchPack.serialise());
 
     CoreManager::getSingleton().sendPacket(Socket::ServerOpCode::PATCH_PACK, data);
-}
-
-void PatchManager::checkSingletonAndIsInitialised_() const
-{
-    if (this == &singleton && !isSingletonInitialised)
-        throw std::logic_error("A PatchManager function was called after it was uninitialised.");
 }

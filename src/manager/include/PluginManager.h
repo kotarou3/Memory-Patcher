@@ -38,8 +38,8 @@ class MANAGER_EXPORT PluginManager final
 {
     public:
         void add(const std::string& pathfile);
-        void remove(const std::string& name, bool isNoNotifyCores = false);
-        void removeAll(bool isNoNotifyCores = false);
+        void remove(const std::string& name);
+        void removeAll();
         bool isLoaded(const std::string& name) const noexcept;
 
         void enable(const std::string& name);
@@ -61,7 +61,6 @@ class MANAGER_EXPORT PluginManager final
         void updateCoresAboutAll() const;
 
         static PluginManager& getSingleton();
-        static bool getIsSingletonInitialised();
 
     private:
         PluginManager() = default;
@@ -83,10 +82,10 @@ class MANAGER_EXPORT PluginManager final
         std::vector<Plugin_>::const_iterator getIteratorToPlugin_(const std::string& name) const;
         std::vector<Plugin_>::iterator getIteratorToPlugin_(const std::string& name);
 
-        std::vector<Plugin_>::iterator remove_(std::vector<Plugin_>::iterator plugin, bool isNoNotifyCores = false);
+        std::vector<Plugin_>::iterator remove_(std::vector<Plugin_>::iterator plugin, bool isExiting = false);
 
         void enable_(Plugin_& plugin);
-        void disable_(Plugin_& plugin, bool isNoNotifyCores = false);
+        void disable_(Plugin_& plugin, bool isExiting = false);
 
         void setExtraSettingValue_(Plugin_& plugin, const std::string& extraSettingLabel, const std::string& value);
         void restoreExtraSettingDefaults_(Plugin_& plugin);
@@ -107,9 +106,6 @@ class MANAGER_EXPORT PluginManager final
             private:
                 std::map<std::string, size_t> names_;
         } interfaceHeaders_;
-
-        static PluginManager singleton;
-        static bool isSingletonInitialised;
 };
 
 #endif

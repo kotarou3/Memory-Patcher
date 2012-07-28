@@ -35,7 +35,7 @@ class CorePlugin
         friend class PluginLoader;
 };
 
-#if defined (BUILD_CORE)
+#ifdef BUILD_CORE
     using createInstance_t = std::unique_ptr<CorePlugin> (*)();
 #else
     extern "C" __attribute__ ((visibility ("default"))) std::unique_ptr<CorePlugin> createInstance();

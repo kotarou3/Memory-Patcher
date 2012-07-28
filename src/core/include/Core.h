@@ -66,7 +66,7 @@ class CORE_EXPORT Core final
 
         std::string coreName_;
 
-        static Core singleton;
+        static Core singleton; // The singleton is only out here because this class needs to be constructed on module load
 };
 
 #endif

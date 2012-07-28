@@ -103,8 +103,6 @@ class MANAGER_EXPORT CoreManager final
         Socket::Socket listenerThreadServerSocket_, listenerThreadClientSocket_; // Communication between listener thread and main thread
 
         CoreId getNextAvailableCoreId_() const;
-
-        static CoreManager singleton;
 };
 
 #endif

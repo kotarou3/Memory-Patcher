@@ -22,30 +22,21 @@
 #include "PluginManager.h"
 #include "ManagerPlugin.h"
 
-PluginManager PluginManager::singleton;
-bool PluginManager::isSingletonInitialised = true;
 PluginManager& PluginManager::getSingleton()
 {
+    static PluginManager singleton;
     return singleton;
-}
-
-bool PluginManager::getIsSingletonInitialised()
-{
-    return isSingletonInitialised;
 }
 
 PluginManager::~PluginManager()
 {
-    removeAll(true);
-
-    if (this == &singleton)
-        isSingletonInitialised = false;
+    auto plugin = plugins_.begin();
+    while (plugin != plugins_.end())
+        plugin = remove_(plugin, true);
 }
 
 void PluginManager::add(const std::string& pathfile)
 {
-    checkSingletonAndIsInitialised_();
-
     Module module;
     try
     {
@@ -91,26 +82,20 @@ void PluginManager::add(const std::string& pathfile)
     updateCoresAbout_(movedPlugin);
 }
 
-void PluginManager::remove(const std::string& name, bool isNoNotifyCores)
+void PluginManager::remove(const std::string& name)
 {
-    checkSingletonAndIsInitialised_();
-
-    remove_(getIteratorToPlugin_(name), isNoNotifyCores);
+    remove_(getIteratorToPlugin_(name));
 }
 
-void PluginManager::removeAll(bool isNoNotifyCores)
+void PluginManager::removeAll()
 {
-    checkSingletonAndIsInitialised_();
-
     auto plugin = plugins_.begin();
     while (plugin != plugins_.end())
-        plugin = remove_(plugin, isNoNotifyCores);
+        plugin = remove_(plugin);
 }
 
 bool PluginManager::isLoaded(const std::string& name) const noexcept
 {
-    checkSingletonAndIsInitialised_();
-
     if (getIteratorToPluginNoThrow_(name) != plugins_.end())
         return true;
     return false;
@@ -118,45 +103,33 @@ bool PluginManager::isLoaded(const std::string& name) const noexcept
 
 void PluginManager::enable(const std::string& name)
 {
-    checkSingletonAndIsInitialised_();
-
     enable_(*getIteratorToPlugin_(name));
 }
 
 void PluginManager::enableAll()
 {
-    checkSingletonAndIsInitialised_();
-
     for (auto& plugin : plugins_)
         enable_(plugin);
 }
 
 void PluginManager::disable(const std::string& name)
 {
-    checkSingletonAndIsInitialised_();
-
     disable_(*getIteratorToPlugin_(name));
 }
 
 void PluginManager::disableAll()
 {
-    checkSingletonAndIsInitialised_();
-
     for (auto& plugin : plugins_)
         disable_(plugin);
 }
 
 bool PluginManager::isEnabled(const std::string& name) const
 {
-    checkSingletonAndIsInitialised_();
-
     return getIteratorToPlugin_(name)->info.isCurrentlyEnabled;
 }
 
 const std::vector<Info> PluginManager::getPluginsInfo() const
 {
-    checkSingletonAndIsInitialised_();
-
     std::vector<Info> retval;
     for (const auto& plugin : plugins_)
         retval.push_back(plugin.info);
@@ -165,59 +138,43 @@ const std::vector<Info> PluginManager::getPluginsInfo() const
 
 const Info& PluginManager::getPluginInfo(const std::string& name) const
 {
-    checkSingletonAndIsInitialised_();
-
     return getIteratorToPlugin_(name)->info;
 }
 
 void PluginManager::setExtraSettingValue(const std::string& name, const std::string& extraSettingLabel, const std::string& value)
 {
-    checkSingletonAndIsInitialised_();
-
     setExtraSettingValue_(*getIteratorToPlugin_(name), extraSettingLabel, value);
 }
 
 void PluginManager::restoreExtraSettingDefaults(const std::string& name)
 {
-    checkSingletonAndIsInitialised_();
-
     restoreExtraSettingDefaults_(*getIteratorToPlugin_(name));
 }
 
 void PluginManager::restoreAllExtraSettingDefaults()
 {
-    checkSingletonAndIsInitialised_();
-
     for (auto& plugin : plugins_)
         restoreExtraSettingDefaults_(plugin);
 }
 
 void PluginManager::updateCoreAbout(const CoreManager::CoreId coreId, const std::string& name) const
 {
-    checkSingletonAndIsInitialised_();
-
     updateCoreAbout_(coreId, *getIteratorToPlugin_(name));
 }
 
 void PluginManager::updateCoresAbout(const std::string& name) const
 {
-    checkSingletonAndIsInitialised_();
-
     updateCoresAbout_(*getIteratorToPlugin_(name));
 }
 
 void PluginManager::updateCoreAboutAll(const CoreManager::CoreId coreId) const
 {
-    checkSingletonAndIsInitialised_();
-
     for (const auto& plugin : plugins_)
         updateCoreAbout_(coreId, plugin);
 }
 
 void PluginManager::updateCoresAboutAll() const
 {
-    checkSingletonAndIsInitialised_();
-
     for (const auto& plugin : plugins_)
         updateCoresAbout_(plugin);
 }
@@ -260,14 +217,14 @@ std::vector<PluginManager::Plugin_>::iterator PluginManager::getIteratorToPlugin
     return result;
 }
 
-std::vector<PluginManager::Plugin_>::iterator PluginManager::remove_(std::vector<Plugin_>::iterator plugin, bool isNoNotifyCores)
+std::vector<PluginManager::Plugin_>::iterator PluginManager::remove_(std::vector<Plugin_>::iterator plugin, bool isExiting)
 {
     // TODO: Save to settings
-    disable_(*plugin, isNoNotifyCores);
+    disable_(*plugin, isExiting);
     for (const auto& interfaceHeader : plugin->plugin->getInterfaceHeaders())
         interfaceHeaders_.remove(interfaceHeader);
 
-    if (!isNoNotifyCores)
+    if (!isExiting)
     {
         // Tell the cores about it
         std::vector<uint8_t> data;
@@ -296,17 +253,17 @@ void PluginManager::enable_(Plugin_& plugin)
     }
 }
 
-void PluginManager::disable_(Plugin_& plugin, bool isNoNotifyCores)
+void PluginManager::disable_(Plugin_& plugin, bool isExiting)
 {
     if (!plugin.info.isCurrentlyEnabled)
         return;
     try
     {
-        plugin.plugin->onDisable(isNoNotifyCores);
+        plugin.plugin->onDisable(isExiting);
     } catch (...) {} // Gobble any exceptions
     plugin.info.isCurrentlyEnabled = false;
     plugin.plugin->onSettingChange(plugin.info);
-    if (!isNoNotifyCores)
+    if (!isExiting)
         updateCoresAbout_(plugin);
 }
 
@@ -352,12 +309,6 @@ void PluginManager::InterfaceHeaders_::remove(std::string name)
     --name_->second;
     if (name_->second == 0)
         names_.erase(name_->first);
-}
-
-void PluginManager::checkSingletonAndIsInitialised_() const
-{
-    if (this == &singleton && !isSingletonInitialised)
-        throw std::logic_error("A PluginManager function was called after it was uninitialised.");
 }
 
 std::set<std::string> PluginManager::InterfaceHeaders_::getNames() const
