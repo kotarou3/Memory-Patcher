@@ -95,21 +95,22 @@ void SettingsManager::save(const std::string& filename) const
     // Convert settings to JSON
     auto rootBranch = settingsTree_.find("settings");
     Json::Value rootJson;
-    if (!rootBranch->second.value.empty())
-        rootJson["value"] = rootBranch->second.value;
     std::stack<std::pair<Json::Value*, const SettingsBranch*>> stack;
-    rootJson["children"] = Json::Value(Json::ValueType::objectValue);
-    for (auto& childBranch : rootBranch->second.children)
-        stack.push(std::make_pair(&rootJson["children"][childBranch.first], &childBranch.second));
+    stack.push(std::make_pair(&rootJson, &rootBranch->second));
     while (stack.size() > 0)
     {
         auto json = stack.top().first;
         auto branch = stack.top().second;
         stack.pop();
         if (!branch->value.empty())
-            (*json)["value"] = branch->value;
+        {
+            if (branch->children.empty())
+                *json = branch->value;
+            else
+                (*json)["__value__"] = branch->value;
+        }
         for (auto& childBranch : branch->children)
-            stack.push(std::make_pair(&(*json)["children"][childBranch.first], &childBranch.second));
+            stack.push(std::make_pair(&(*json)[childBranch.first], &childBranch.second));
     }
     std::string buffer = Json::StyledWriter().write(rootJson);
 
@@ -158,31 +159,25 @@ void SettingsManager::load(const std::string& filename, bool isSaveOnExit)
         throw std::runtime_error("Failed to parse settings JSON:\n" + reader.getFormattedErrorMessages());
     auto rootBranch = settingsTree_.find("settings");
     rootBranch->second.children.clear();
-    rootBranch->second.value = rootJson.get("value", std::string()).asString();
     std::stack<std::pair<std::map<std::string, SettingsBranch>::iterator, Json::Value*>> stack;
-    Json::Value& rootJsonChildren = rootJson["children"];
-    if (!rootJsonChildren.isObject())
-        return;
-    for (auto child = rootJsonChildren.begin(); child != rootJsonChildren.end(); ++child)
-    {
-        auto branch = rootBranch->second.children.insert(std::make_pair(child.memberName(), SettingsBranch())).first;
-        branch->second.parent = rootBranch;
-        stack.push(std::make_pair(branch, &*child));
-    }
+    stack.push(std::make_pair(rootBranch, &rootJson));
     while (stack.size() > 0)
     {
         auto branch = stack.top().first;
         auto json = stack.top().second;
         stack.pop();
         if (!json->isObject())
-            continue;
-
-        branch->second.value = json->get("value", std::string()).asString();
-        Json::Value& jsonChildren = (*json)["children"];
-        if (!jsonChildren.isObject())
-            continue;
-        for (auto child = jsonChildren.begin(); child != jsonChildren.end(); ++child)
         {
+            if (json->isString())
+                branch->second.value = json->asString();
+            continue;
+        }
+
+        branch->second.value = json->get("__value__", std::string()).asString();
+        for (auto child = json->begin(); child != json->end(); ++child)
+        {
+            if (std::string(child.memberName()) == "__value__")
+                continue;
             auto childBranch = branch->second.children.insert(std::make_pair(child.memberName(), SettingsBranch())).first;
             childBranch->second.parent = branch;
             stack.push(std::make_pair(childBranch, &*child));
