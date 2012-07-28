@@ -76,7 +76,14 @@ std::string SettingsManager::get(const std::string& name) const noexcept
 
 void SettingsManager::set(const std::string& name, const std::string& value)
 {
-    if (value.empty())
+    bool isClear = value.empty();
+    if (!isClear)
+    {
+        auto defaultValue = get_(name, settingsTree_.find("defaultSettings"));
+        if (defaultValue != settingsTree_.end() && value == defaultValue->second.value)
+            isClear = true;
+    }
+    if (isClear)
         clear_(name, settingsTree_.find("settings"));
     else
         get_(name, settingsTree_.find("settings"), true)->second.value = value;
