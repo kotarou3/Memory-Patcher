@@ -50,6 +50,7 @@ class MANAGER_EXPORT PluginManager final
 
         const std::vector<Info> getPluginsInfo() const;
         const Info& getPluginInfo(const std::string& name) const;
+        std::string getCorePluginName(const std::string& name) const;
 
         void setExtraSettingValue(const std::string& name, const std::string& extraSettingLabel, const std::string& value);
         void restoreExtraSettingDefaults(const std::string& name);
@@ -63,7 +64,7 @@ class MANAGER_EXPORT PluginManager final
         static PluginManager& getSingleton();
 
     private:
-        PluginManager() = default;
+        PluginManager();
         PluginManager(const PluginManager&) = delete;
         PluginManager& operator=(const PluginManager&) = delete;
         ~PluginManager();
@@ -76,6 +77,7 @@ class MANAGER_EXPORT PluginManager final
                 Module module;
                 std::unique_ptr<ManagerPlugin> plugin;
                 Info info;
+                std::string corePluginName;
         };
 
         std::vector<Plugin_>::const_iterator getIteratorToPluginNoThrow_(const std::string& name) const noexcept;
@@ -96,16 +98,6 @@ class MANAGER_EXPORT PluginManager final
         void checkSingletonAndIsInitialised_() const;
 
         std::vector<Plugin_> plugins_;
-        class InterfaceHeaders_ final
-        {
-            public:
-                void add(std::string name);
-                void remove(std::string name);
-                std::set<std::string> getNames() const;
-
-            private:
-                std::map<std::string, size_t> names_;
-        } interfaceHeaders_;
 };
 
 #endif

@@ -71,9 +71,8 @@ const Info& PluginLoader::getPluginInfo(const std::string& name) const
 void PluginLoader::pluginReceiveHandler_(const std::vector<uint8_t>& data)
 {
     auto iterator = data.cbegin();
-    std::string file = deserialiseIntegralTypeContinuousContainer<std::string>(iterator);
-    file.replace(file.rfind("manager"), std::strlen("manager"), "core"); // xxxxxxx_manager.so -> xxxxxxx_core.so
-    std::string pathfile = deserialiseIntegralTypeContinuousContainer<std::string>(iterator) + file;
+    std::string corePluginName = deserialiseIntegralTypeContinuousContainer<std::string>(iterator);
+    std::string pathfile = deserialiseIntegralTypeContinuousContainer<std::string>(iterator) + "/lib" + corePluginName;
     Info info;
     info.deserialise(deserialiseIntegralTypeContinuousContainer<std::vector<uint8_t>>(iterator));
 

@@ -17,6 +17,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 
 #include <cstdio>
 #include <cstring>
@@ -54,6 +55,7 @@ namespace posix
 #endif
 
 #include "PatchCompiler.h"
+#include "PluginManager.h"
 #include "SettingsManager.h"
 #include "Misc.h"
 
@@ -544,12 +546,21 @@ std::string getObjectDirectory()
 
 std::string getCXXFLAGS()
 {
-    return "-m32 -std=gnu++11 -I\"" + SettingsManager::getSingleton().get("PatchCompiler.includePath") + "\"";
+    return "-m32 -std=gnu++11 -I\"" + SettingsManager::getSingleton().get("PatchCompiler.includePath") + "\" -I\"" + SettingsManager::getSingleton().get("PluginManager.includePath") + "\"";
 }
 
 std::string getLDFLAGS()
 {
-    return "-m32 -L\"" + SettingsManager::getSingleton().get("PatchCompiler.libraryPath") + "\" -lcore";
+    std::string result = "-m32 -L\"" + SettingsManager::getSingleton().get("PatchCompiler.libraryPath") + "\" -lcore -L\"" + SettingsManager::getSingleton().get("PluginManager.corePluginsPath") + "\"";
+    PluginManager& pluginManager = PluginManager::getSingleton();
+    auto pluginsInfo = pluginManager.getPluginsInfo();
+    for (const auto& pluginInfo : pluginsInfo)
+    {
+        std::string corePluginName = pluginManager.getCorePluginName(pluginInfo.name);
+        if (!corePluginName.empty())
+            result += " -l\"" + corePluginName + "\"";
+    }
+    return result;
 }
 
 std::string getCustomCXXFLAGS()

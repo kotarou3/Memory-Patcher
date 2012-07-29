@@ -20,12 +20,21 @@
 #include <stdexcept>
 
 #include "PluginManager.h"
+#include "SettingsManager.h"
 #include "ManagerPlugin.h"
 
 PluginManager& PluginManager::getSingleton()
 {
     static PluginManager singleton;
     return singleton;
+}
+
+PluginManager::PluginManager()
+{
+    SettingsManager& settingsManager = SettingsManager::getSingleton();
+    settingsManager.setDefault("PluginManager.includePath", "plugins/include");
+    settingsManager.setDefault("PluginManager.managerPluginsPath", "plugins/manager"); // Unused
+    settingsManager.setDefault("PluginManager.corePluginsPath", "plugins/core");
 }
 
 PluginManager::~PluginManager()
@@ -61,14 +70,13 @@ void PluginManager::add(const std::string& pathfile)
     plugin.module = std::move(module);
     plugin.plugin = createInstance();
     plugin.info = plugin.plugin->getInfo();
+    plugin.corePluginName = plugin.plugin->getCorePluginName();
 
     if (plugin.info.name.empty())
         throw std::logic_error("The plugin name cannot be empty.");
     else if (isLoaded(plugin.info.name))
         throw std::logic_error("The plugin is already loaded.");
 
-    for (const auto& interfaceHeader : plugin.plugin->getInterfaceHeaders())
-        interfaceHeaders_.add(interfaceHeader);
     plugins_.push_back(std::move(plugin));
     auto& movedPlugin = plugins_.back();
 
@@ -141,6 +149,11 @@ const Info& PluginManager::getPluginInfo(const std::string& name) const
     return getIteratorToPlugin_(name)->info;
 }
 
+std::string PluginManager::getCorePluginName(const std::string& name) const
+{
+    return getIteratorToPlugin_(name)->corePluginName;
+}
+
 void PluginManager::setExtraSettingValue(const std::string& name, const std::string& extraSettingLabel, const std::string& value)
 {
     setExtraSettingValue_(*getIteratorToPlugin_(name), extraSettingLabel, value);
@@ -186,8 +199,8 @@ std::vector<uint8_t> PluginManager::Plugin_::serialise() const
     std::vector<uint8_t> data;
     data.reserve(1024);
 
-    serialiseIntegralTypeContinuousContainer(data, module.getFile());
-    serialiseIntegralTypeContinuousContainer(data, module.getPath());
+    serialiseIntegralTypeContinuousContainer(data, corePluginName);
+    serialiseIntegralTypeContinuousContainer(data, SettingsManager::getSingleton().get("PluginManager.corePluginsPath")); // FIXME: Send the absolute path
     serialiseIntegralTypeContinuousContainer(data, info.serialise());
     return data;
 }
@@ -221,8 +234,6 @@ std::vector<PluginManager::Plugin_>::iterator PluginManager::remove_(std::vector
 {
     // TODO: Save to settings
     disable_(*plugin, isExiting);
-    for (const auto& interfaceHeader : plugin->plugin->getInterfaceHeaders())
-        interfaceHeaders_.remove(interfaceHeader);
 
     if (!isExiting)
     {
@@ -290,31 +301,4 @@ void PluginManager::updateCoreAbout_(const CoreManager::CoreId coreId, const Plu
 void PluginManager::updateCoresAbout_(const Plugin_& plugin) const
 {
     CoreManager::getSingleton().sendPacket(Socket::ServerOpCode::PLUGIN, plugin.serialise());
-}
-
-void PluginManager::InterfaceHeaders_::add(std::string name)
-{
-    auto name_ = names_.find(name);
-    if (name_ == names_.end())
-        names_.insert(std::make_pair(name, 1));
-    else
-        ++name_->second;
-}
-
-void PluginManager::InterfaceHeaders_::remove(std::string name)
-{
-    auto name_ = names_.find(name);
-    if (name_ == names_.end())
-        return;
-    --name_->second;
-    if (name_->second == 0)
-        names_.erase(name_->first);
-}
-
-std::set<std::string> PluginManager::InterfaceHeaders_::getNames() const
-{
-    std::set<std::string> result;
-    for (const auto& name : names_)
-        result.insert(name.first);
-    return result;
 }

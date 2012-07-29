@@ -30,8 +30,8 @@
 class ManagerPlugin
 {
     public:
-        virtual Info getInfo() = 0;
-        virtual const std::set<std::string> getInterfaceHeaders() { return {}; }
+        virtual Info getInfo() const = 0;
+        virtual std::string getCorePluginName() const { return ""; }
 
     protected:
         virtual void onEnable() {};
