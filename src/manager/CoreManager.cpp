@@ -135,14 +135,6 @@ CoreManager& CoreManager::getSingleton()
 
 CoreManager::CoreManager()
 {
-    SettingsManager& settings = SettingsManager::getSingleton();
-    settings.setDefault("CoreManager.applicationName", "./test"
-    #ifdef _WIN32
-        ".exe"
-    #endif
-    );
-    settings.setDefault("CoreManager.applicationParameters", "");
-
 #ifdef _WIN32
     win32::WSADATA wsaData;
     win32::WSAStartup((2 << 8) + 2, &wsaData);

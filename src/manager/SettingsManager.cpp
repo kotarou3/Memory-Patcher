@@ -24,6 +24,7 @@
 #include <cassert>
 
 #include "SettingsManager.h"
+#include "Logger.h"
 #include "json/json.h"
 
 SettingsManager& SettingsManager::getSingleton()
@@ -39,7 +40,11 @@ SettingsManager::SettingsManager()
     branch = settingsTree_.insert(std::make_pair("defaultSettings", SettingsBranch())).first;
     branch->second.parent = branch;
 
-    // PatchCompiler default settings set here because it has no constructor
+    // Here comes the default settings
+    setDefault("Logger.minimumSeverity", itos((int)Logger::Severity::NOTICE));
+    setDefault("PluginManager.includePath", "plugins/include");
+    setDefault("PluginManager.managerPluginsPath", "plugins/manager"); // Unused
+    setDefault("PluginManager.corePluginsPath", "plugins/core");
     setDefault("PatchCompiler.patchesLibrary", "libpatches."
     #ifdef _WIN32
         "dll");
@@ -52,6 +57,12 @@ SettingsManager::SettingsManager()
     setDefault("PatchCompiler.CXX", "g++-4.7");
     setDefault("PatchCompiler.customCXXFLAGS", "-Wall -Wextra -pedantic -pipe -fvisibility=hidden -mtune=core2 -D_GLIBCXX_USE_NANOSLEEP -ggdb -DDEBUG");
     setDefault("PatchCompiler.customLDFLAGS", "");
+    setDefault("CoreManager.applicationName", "./test"
+    #ifdef _WIN32
+        ".exe"
+    #endif
+        );
+    setDefault("CoreManager.applicationParameters", "");
 }
 
 SettingsManager::~SettingsManager()

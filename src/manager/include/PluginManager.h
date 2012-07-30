@@ -64,7 +64,7 @@ class MANAGER_EXPORT PluginManager final
         static PluginManager& getSingleton();
 
     private:
-        PluginManager();
+        PluginManager() = default;
         PluginManager(const PluginManager&) = delete;
         PluginManager& operator=(const PluginManager&) = delete;
         ~PluginManager();

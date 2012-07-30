@@ -25,12 +25,6 @@
 Logger& Logger::getSingleton()
 {
     static Logger singleton;
-    static bool isDefaultSettingsSet = false;
-    if (!isDefaultSettingsSet)
-    {
-        SettingsManager::getSingleton().setDefault("Logger.minimumSeverity", itos((int)Severity::NOTICE));
-        isDefaultSettingsSet = true;
-    }
     return singleton;
 }
 

@@ -29,14 +29,6 @@ PluginManager& PluginManager::getSingleton()
     return singleton;
 }
 
-PluginManager::PluginManager()
-{
-    SettingsManager& settingsManager = SettingsManager::getSingleton();
-    settingsManager.setDefault("PluginManager.includePath", "plugins/include");
-    settingsManager.setDefault("PluginManager.managerPluginsPath", "plugins/manager"); // Unused
-    settingsManager.setDefault("PluginManager.corePluginsPath", "plugins/core");
-}
-
 PluginManager::~PluginManager()
 {
     auto plugin = plugins_.begin();
