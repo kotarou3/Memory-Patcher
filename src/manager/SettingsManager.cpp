@@ -126,6 +126,8 @@ void SettingsManager::save(const std::string& filename) const
         for (auto& childBranch : branch->children)
             stack.push(std::make_pair(&(*json)[childBranch.first], &childBranch.second));
     }
+    if (!rootJson.isObject())
+        return; // Nothing to save
     std::string buffer = Json::StyledWriter().write(rootJson);
 
     // Write the JSON to the file
