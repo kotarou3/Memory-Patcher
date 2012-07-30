@@ -229,6 +229,9 @@ void Module::updateInfo()
     this->file += ext;
     this->path = drive;
     this->path += path;
+    // Strip the trailing slash
+    if (!this->path.empty() && (this->path.back() == '/' || this->path.back() == '\\'))
+        this->path.pop_back();
 
     // Get the original segments
     originalSegments.clear();
@@ -297,7 +300,6 @@ void Module::updateInfo()
     char realPath[PATH_MAX];
     posix::realpath(posix::dirname(path), realPath);
     this->path = realPath;
-    this->path += "/";
 
     // Get the original segments and the base
     originalSegments.clear();
