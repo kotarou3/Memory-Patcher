@@ -44,7 +44,6 @@ namespace win32
 namespace posix
 {
     #include <unistd.h>
-    #include <libgen.h>
     #include <fcntl.h>
     #include <sys/socket.h>
     //#include <sys/select.h> // Can't seem to put select.h in a namespace because of standard headers including it
@@ -163,19 +162,19 @@ CoreManager::CoreId CoreManager::startCore()
 {
     std::string applicationName = SettingsManager::getSingleton().get("CoreManager.applicationName");
     std::string parameters = SettingsManager::getSingleton().get("CoreManager.applicationParameters");
-    const std::string& coreName("libcore"
-    #ifdef _WIN32
-        ".dll"
-    #else
-        ".so"
-    #endif
-    );
+    std::string libraryPath = SettingsManager::getSingleton().get("CoreManager.libraryPath");
+    std::string coreName = "lib" + SettingsManager::getSingleton().get("CoreManager.coreLibrary");
+#ifdef _WIN32
+    coreName += ".dll";
+#else
+    coreName += ".so";
+#endif
 
     Socket::Socket listenSocket = startConnectCore_();
     ProcessId pid;
     try
     {
-        pid = startCore_(applicationName, parameters, coreName);
+        pid = startCore_(applicationName, parameters, libraryPath, coreName);
     }
     catch (std::exception e)
     {
@@ -311,7 +310,7 @@ Socket::Socket CoreManager::startConnectCore_() const
     return listenSocket;
 }
 
-CoreManager::ProcessId CoreManager::startCore_(const std::string& applicationName, const std::string& parameters, const std::string& coreName)
+CoreManager::ProcessId CoreManager::startCore_(const std::string& applicationName, const std::string& parameters, const std::string& libraryPath, const std::string& coreName)
 {
 #ifdef _WIN32
     // Create the process as suspended
@@ -321,8 +320,9 @@ CoreManager::ProcessId CoreManager::startCore_(const std::string& applicationNam
         throw std::runtime_error("Could not create process: " + strErrorWin32(win32::GetLastError()));
 
     // Allocate and initialise memory in the other process with the core name
+    std::string corePathfile = libraryPath + "/" + coreName; // FIXME: Should be full path
     void* coreName_otherProcess = win32::VirtualAllocEx(pid.hProcess, nullptr, MAX_PATH, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-    win32::WriteProcessMemory(pid.hProcess, coreName_otherProcess, coreName.c_str(), coreName.size(), nullptr);
+    win32::WriteProcessMemory(pid.hProcess, coreName_otherProcess, corePathfile.c_str(), corePathfile.size(), nullptr);
 
     // Create wrapper code around the LoadLibrary call so it returns the error code on exit because we don't need to know the core address
     char callLoadLibrary[] = {
@@ -393,18 +393,16 @@ CoreManager::ProcessId CoreManager::startCore_(const std::string& applicationNam
                 _envp.push_back(environ[i]);
 
         // Update LD_LIBRARY_PATH to contain the path to the core
-        std::string pathToCore = posix::dirname(posix::strdup(coreName.c_str()));
         if (LD_LIBRARY_PATH.empty())
-            LD_LIBRARY_PATH = pathToCore;
-        else if ((":" + LD_LIBRARY_PATH + ":").find(":" + pathToCore + ":") == std::string::npos)
-            LD_LIBRARY_PATH += ":" + pathToCore;
+            LD_LIBRARY_PATH = libraryPath;
+        else if ((":" + LD_LIBRARY_PATH + ":").find(":" + libraryPath + ":") == std::string::npos)
+            LD_LIBRARY_PATH += ":" + libraryPath;
 
         // Update LD_PRELOAD to load the core
-        std::string basenameOfCore = posix::basename(posix::strdup(coreName.c_str()));
         if (LD_PRELOAD.empty())
-            LD_PRELOAD = basenameOfCore;
+            LD_PRELOAD = coreName;
         else
-            LD_PRELOAD += " " + basenameOfCore;
+            LD_PRELOAD += " " + coreName;
 
         // Ready the environment to be passed to exec
         char* envp[_envp.size() + 3];

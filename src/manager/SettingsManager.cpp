@@ -45,15 +45,8 @@ SettingsManager::SettingsManager()
     setDefault("PluginManager.includePath", "plugins/include");
     setDefault("PluginManager.managerPluginsPath", "plugins/manager"); // Unused
     setDefault("PluginManager.corePluginsPath", "plugins/core");
-    setDefault("PatchCompiler.patchesLibrary", "libpatches."
-    #ifdef _WIN32
-        "dll");
-    #else
-        "so");
-    #endif
     setDefault("PatchCompiler.includePath", "include");
     setDefault("PatchCompiler.objectsPath", "objects");
-    setDefault("PatchCompiler.libraryPath", ".");
     setDefault("PatchCompiler.CXX", "g++-4.7");
     setDefault("PatchCompiler.customCXXFLAGS", "-Wall -Wextra -pedantic -pipe -fvisibility=hidden -mtune=core2 -D_GLIBCXX_USE_NANOSLEEP -ggdb -DDEBUG");
     setDefault("PatchCompiler.customLDFLAGS", "");
@@ -63,6 +56,9 @@ SettingsManager::SettingsManager()
     #endif
         );
     setDefault("CoreManager.applicationParameters", "");
+    setDefault("CoreManager.libraryPath", ".");
+    setDefault("CoreManager.coreLibrary", "core");
+    setDefault("CoreManager.patchesLibrary", "patches");
 }
 
 SettingsManager::~SettingsManager()

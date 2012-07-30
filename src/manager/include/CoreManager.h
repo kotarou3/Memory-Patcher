@@ -81,7 +81,7 @@ class MANAGER_EXPORT CoreManager final
         void initQuitSockets_();
 
         Socket::Socket startConnectCore_() const;
-        ProcessId startCore_(const std::string& applicationName, const std::string& parameters, const std::string& coreName);
+        ProcessId startCore_(const std::string& applicationName, const std::string& parameters, const std::string& libraryPath, const std::string& coreName);
         CoreId finishConnectCore_(ProcessId pid, Socket::Socket listenSocket, const std::string& coreName);
 
         void endAllCoreConnections_();

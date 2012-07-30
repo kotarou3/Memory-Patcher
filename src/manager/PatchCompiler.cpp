@@ -154,7 +154,12 @@ std::string compilePatchPack(const PatchPack& patchPack, bool& isSkipped, bool f
 
 std::string linkObjects(bool force)
 {
-    std::string patchesFilename = SettingsManager::getSingleton().get("PatchCompiler.patchesLibrary");
+    std::string patchesFilename = SettingsManager::getSingleton().get("CoreManager.libraryPath") + "/lib" + SettingsManager::getSingleton().get("CoreManager.patchesLibrary");
+#ifdef _WIN32
+    patchesFilename += ".dll";
+#else
+    patchesFilename += ".so";
+#endif
     if (!force)
     {
         // Check if we really need to relink
@@ -551,7 +556,7 @@ std::string getCXXFLAGS()
 
 std::string getLDFLAGS()
 {
-    std::string result = "-m32 -L\"" + SettingsManager::getSingleton().get("PatchCompiler.libraryPath") + "\" -lcore -L\"" + SettingsManager::getSingleton().get("PluginManager.corePluginsPath") + "\"";
+    std::string result = "-m32 -L\"" + SettingsManager::getSingleton().get("CoreManager.libraryPath") + "\" -l\"" + SettingsManager::getSingleton().get("CoreManager.coreLibrary") + "\" -L\"" + SettingsManager::getSingleton().get("PluginManager.corePluginsPath") + "\"";
     PluginManager& pluginManager = PluginManager::getSingleton();
     auto pluginsInfo = pluginManager.getPluginsInfo();
     for (const auto& pluginInfo : pluginsInfo)

@@ -44,7 +44,6 @@ namespace win32
 namespace posix
 {
     #include <unistd.h>
-    #include <libgen.h>
     #include <sys/socket.h>
     #include <netinet/in.h>
 
@@ -170,9 +169,7 @@ Core::Core():
 #ifndef _WIN32
     // Clear the core name from LD_PRELOAD
     std::string LD_PRELOAD = posix::getenv("LD_PRELOAD");
-    std::string coreNameCopy = coreName_;
-    std::string basenameOfCore = posix::basename(&coreNameCopy[0]);
-    LD_PRELOAD.replace(LD_PRELOAD.find(basenameOfCore), basenameOfCore.size(), "");
+    LD_PRELOAD.replace(LD_PRELOAD.find(coreName_), coreName_.size(), "");
     posix::setenv("LD_PRELOAD", LD_PRELOAD.c_str(), true);
 #endif
 
